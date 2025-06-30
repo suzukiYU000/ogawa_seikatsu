@@ -86,7 +86,6 @@ def display_image_for_vitality(vitality, image_paths):
         cv2.imshow('Lidar Display', img)
         cv2.waitKey(1)
 
-
 def ask_image_folder():
     root = tk.Tk()
     root.withdraw()
