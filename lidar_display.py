@@ -36,16 +36,55 @@ WINDOW_SIZE = 5    # moving average window size
 
 
 def classify_distance(dist_cm):
-    """Return presence flag, hunched flag, and frame index for a distance."""
+    """Return presence flag and hunched flag for a smoothed distance."""
     if dist_cm is None or dist_cm >= FAR_CM:
-        return False, False, 0
+        return False, False
     if dist_cm >= NEAR_CM:
         presence = True
         hunched = dist_cm <= HUNCHED_CM
-        return presence, hunched, 1
+        return presence, hunched
     # below NEAR_CM is treated as no measurement
-    return False, False, 0
+    return False, False
 
+
+class PersonState:
+    def __init__(self):
+        self.presence = False
+        self.duration = 0.0
+
+    def update(self, presence, dt=1.0):
+        if presence == self.presence:
+            self.duration += dt
+        else:
+            self.presence = presence
+            self.duration = dt
+        return self.presence, self.duration
+
+
+class FlowerState:
+    def __init__(self, vitality=100.0):
+        self.vitality = vitality
+        self.decay_rate = 5.0
+        self.recover_rate = 3.0
+
+    def update(self, presence, dt=1.0):
+        if presence:
+            self.vitality -= self.decay_rate * dt
+        else:
+            self.vitality += self.recover_rate * dt
+        self.vitality = max(0.0, min(100.0, self.vitality))
+        return self.vitality
+
+
+def display_image_for_vitality(vitality, image_paths):
+    """Display an image chosen according to vitality."""
+    n = len(image_paths)
+    idx = int((vitality / 100.0) * (n - 1))
+    path = image_paths[idx]
+    img = cv2.imread(path)
+    if img is not None:
+        cv2.imshow('Lidar Display', img)
+        cv2.waitKey(1)
 
 def ask_image_folder():
     root = tk.Tk()
@@ -88,6 +127,9 @@ def main():
     laser.setlidaropt(ydlidar.LidarPropSupportHeartBeat, False)
 
     history = deque(maxlen=WINDOW_SIZE)
+    person = PersonState()
+    flower = FlowerState()
+    dt = 0.05
 
     try:
         _ = laser.initialize()
@@ -107,19 +149,20 @@ def main():
                 sys.stderr.write("Failed to get Lidar Data\n")
 
             smooth_cm = sum(history) / len(history) if history else None
-            presence, hunched, frame = classify_distance(smooth_cm)
+            presence, hunched = classify_distance(smooth_cm)
+            person.update(presence, dt)
+            vitality = flower.update(presence, dt)
 
-            img = cv2.imread(image_paths[frame % len(image_paths)])
-            if img is not None:
-                cv2.imshow('Lidar Display', img)
-                cv2.waitKey(1)
+            display_image_for_vitality(vitality, image_paths)
 
             if smooth_cm is not None:
-                print(f"frame={frame} dist={smooth_cm:.1f}cm presence={presence} hunched={hunched}")
+                print(
+                    f"dist={smooth_cm:.1f}cm presence={presence} hunched={hunched} vital={vitality:.1f}"
+                )
             else:
-                print(f"frame={frame} no data")
+                print(f"no data presence={presence} vital={vitality:.1f}")
 
-            time.sleep(0.05)
+            time.sleep(dt)
 
         laser.turnOff()
     finally:
