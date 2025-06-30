@@ -1,5 +1,17 @@
 import time
-import ydlidar
+import sys
+
+try:
+    import ydlidar
+except ModuleNotFoundError:
+    sys.stderr.write(
+        "YDLidar python bindings are not installed.\n"
+        "Create a virtual environment and install them with:\n"
+        "  python3 -m venv .venv\n"
+        "  . .venv/bin/activate\n"
+        "  pip install ./YDLidar-SDK\n"
+    )
+    sys.exit(1)
 
 
 def main():
