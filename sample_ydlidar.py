@@ -1,5 +1,15 @@
 import time
-import ydlidar
+import sys
+
+try:
+    import ydlidar
+except ModuleNotFoundError:
+    sys.stderr.write(
+        "YDLidar python bindings are not installed.\n"
+        "Build and install them with:\n"
+        "  cd YDLidar-SDK && python3 setup.py install\n"
+    )
+    sys.exit(1)
 
 
 def main():
