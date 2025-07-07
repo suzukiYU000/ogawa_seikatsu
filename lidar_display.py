@@ -30,9 +30,9 @@ except ModuleNotFoundError:
 
 # ---- Detection parameters ----
 NEAR_CM = 10.0     # minimum distance considered (cm)
-FAR_CM = 60.0      # maximum distance considered as presence (cm)
+FAR_CM = 50.0      # maximum distance considered as presence (cm)
 HUNCHED_CM = 30.0  # below this value indicates hunched posture
-WINDOW_SIZE = 5    # moving average window size
+WINDOW_SIZE = 10    # moving average window size
 
 
 def classify_distance(dist_cm):
@@ -64,8 +64,8 @@ class PersonState:
 class FlowerState:
     def __init__(self, vitality=100.0):
         self.vitality = vitality
-        self.decay_rate = 5.0
-        self.recover_rate = 3.0
+        self.decay_rate = 80.0
+        self.recover_rate = 80.0
 
     def update(self, presence, dt=1.0):
         if presence:
@@ -129,7 +129,7 @@ def main():
     history = deque(maxlen=WINDOW_SIZE)
     person = PersonState()
     flower = FlowerState()
-    dt = 0.05
+    dt = 0.01
 
     try:
         _ = laser.initialize()
