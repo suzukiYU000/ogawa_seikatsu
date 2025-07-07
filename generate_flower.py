@@ -72,7 +72,7 @@ def main():
     video_path = filedialog.askopenfilename(
         title="Select video file",
         filetypes=[("Video files", "*.mp4 *.avi *.mov *.mkv"), ("All files", "*.*")],
-        initialdir=os.getcwd()
+        
     )
     if not video_path:
         messagebox.showinfo("No file selected", "No video file was selected. Exiting.")
